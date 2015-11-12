@@ -1,0 +1,87 @@
+    $admin_key = 'ADMIN_KEY'
+    $mon_key = 'MON_KEY'
+    $bootstrap_osd_key = 'OSD_KEY'
+    $fsid = 'UUID'
+
+
+    node /MONS/ {
+      class { 'ceph::repo': }
+      class { 'ceph':
+        fsid                => $fsid,
+        mon_initial_members => '<mon1_hostname>,<mon2_hostname>,<mon3_hostname>',
+        mon_host            => 'MON_HOSTS_IP,MON_HOSTS_IP,MON_HOSTS_IP'
+      }
+
+      ceph::mon { $::hostname:
+        key => $mon_key,
+      }
+
+      Ceph::Key { 
+        inject         => true,
+        inject_as_id   => 'mon.',
+        inject_keyring => "/var/lib/ceph/mon/ceph-${::hostname}/keyring",
+      } 
+
+      ceph::key { 'client.admin':
+        secret  => $admin_key,
+        cap_mon => 'allow *',
+        cap_osd => 'allow *',
+        cap_mds => 'allow',
+      }
+
+      ceph::key { 'client.bootstrap-osd':
+        secret  => $bootstrap_osd_key,
+        cap_mon => 'allow profile bootstrap-osd',
+      }
+
+      firewall {'010 ceph-mon allow':
+        chain  => 'INPUT',
+        dport  => 6789,
+        proto  => 'tcp',
+        action => accept,
+      }
+    }
+
+
+    node /OSDS/ {
+      class { 'ceph::repo': }
+      class { 'ceph':
+        fsid                => $fsid,
+        mon_initial_members => '<mon1_hostname>,<mon2_hostname>,<mon3_hostname>',
+        mon_host            => 'MON_HOSTS_IP,MON_HOSTS_IP,MON_HOSTS_IP'
+      }
+
+      ceph::osd {
+ DISKS
+
+
+      }
+
+      ceph::key {'client.bootstrap-osd':
+         keyring_path => '/var/lib/ceph/bootstrap-osd/ceph.keyring',
+         secret       => $bootstrap_osd_key,
+      }
+
+      ceph::key { 'client.admin':
+        secret => $admin_key
+      }
+
+      firewall { '011 ceph-osd allow':
+        chain  => 'INPUT',
+        dport  => '6800-7100',
+        proto  => 'tcp',
+        action => accept,
+      }
+  }
+
+    node /CLIENTS/ {
+      class { 'ceph::repo': }
+      class { 'ceph':
+        fsid                => $fsid,
+        mon_initial_members => '<mon1_hostname>,<mon2_hostname>,<mon3_hostname>',
+        mon_host            => 'MON_HOSTS_IP,MON_HOSTS_IP,MON_HOSTS_IP'
+      }
+      ceph::key { 'client.admin':
+        secret => $admin_key
+      }
+    }
