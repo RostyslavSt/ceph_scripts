@@ -86,10 +86,11 @@ config_ceph_puppet () {
   sed -i "s%MON_KEY%$MON_KEY%g" ceph.puppet
   sed -i "s%OSD_KEY%$OSD_KEY%g" ceph.puppet
 
-  sed -i "s/MON_HOSTS/$MONS_IP/g" ceph.puppet
+  sed -i "s/MON_HOSTS_IP,MON_HOSTS_IP,MON_HOSTS_IP/$MONS_IP/g" ceph.puppet
 
   sed -i "s/\/OSDS\//$OSDS_CEPH_PUPPET/g" ceph.puppet
   sed -i "s/\/MONS\//$MONS_CEPH_PUPPET/g" ceph.puppet
+  sed -i "s/<mon1_hostname>,<mon2_hostname>,<mon3_hostname>/$MONS_CEPH_PUPPET/g" ceph.puppet
   sed -i "s/\/CLIENTS\//$CLIENTS_CEPH_PUPPET/g" ceph.puppet
 
   sed -i "s%TEMP_DIR%$TMP_DIR%g" $SC_DIR/deploy.sh
