@@ -19,6 +19,8 @@ OSDS=${OSDS:-""}
 DISKS=${DISKS:-""}
 
 ##############################################################################
+
+##############################################################################
 # if you want to specify KEYs, insert them here
 # else, leave this parameters empty and keys will be generated automatically
 ####
@@ -26,7 +28,6 @@ ADMIN_KEY=${ADMIN_KEY:-""}
 MON_KEY=${MON_KEY:-""}
 OSD_KEY=${OSD_KEY:=""}
 UUID=${UUID_KEY:=""}
-
 
 
 SC_DIR=$(pwd)
@@ -54,6 +55,18 @@ get_ips () {
     node_ip=$(ping -c 1 $node | grep icmp | awk {'print $5'} | sed "s/(//g" | sed "s/)://g")     # "
     NODES_IP_LIST=${NODES_IP_LIST:-$node_ip}
     NODES_IP_LIST=$(echo "$node_ip,$NODES_IP_LIST")
+}
+
+split_osd_jornals () {
+    local node="$1"
+    local SSH="ssh $node"
+
+    $SSH sudo parted -a optimal --script $JORN_disk -- mktable gpt
+    $SSH sudo parted -a optimal --script $JORN_disk -- mkpart xfs 1 20GB
+    $SSH sudo parted -a optimal --script $JORN_disk -- mkpart xfs 20GB 40GB
+    $SSH sudo parted -a optimal --script $JORN_disk -- mkpart xfs 40GB 60GB
+    $SSH sudo parted -a optimal --script $JORN_disk -- mkpart xfs 60GB 80GB
+    $SSH sudo parted -a optimal --script $JORN_disk -- mkpart xfs 80GB 100GB
 }
 
 config_ceph_puppet () {
