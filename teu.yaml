@@ -1,0 +1,7 @@
+
+branch: wip-no-blockedpromote-return-fix
+overrides:
+-  install:
+    ceph:
+      ceph_git_url: https://github.com/ifed01/ceph
+      branch: wip-no-blockedpromote-return-fix
