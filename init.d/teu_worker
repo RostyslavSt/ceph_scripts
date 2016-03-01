@@ -20,6 +20,7 @@ start() {
  START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep | awk '{print $1,$2,$12,$16,$17,$18,$19}')
  if [ -z "$START_STATUS" ];
   then
+        unset START_STATUS
         echo "Starting worker ..."
         cd /home/teuthworker
         sudo -u teuthworker "/home/teuthworker/bin/start.sh"
@@ -55,16 +56,16 @@ status() {
  fi
 }
 
-check() {
- START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
- if [ -z "$START_STATUS" ];
-      then
-        echo "   *  fail"
-      else
-        echo "   *  done"
-        tail /home/teuthworker/archive/worker_logs/process_logs
- fi
-}
+#check() {
+# CH_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
+# if [ -z "$CH_STATUS" ];
+#      then
+#        echo "   *  fail"
+#      else
+#        echo "   *  done"
+#        tail /home/teuthworker/archive/worker_logs/process_logs
+# fi
+#}
 
 
 case "$1" in
