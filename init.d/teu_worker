@@ -1,9 +1,9 @@
-#! /bin/bash -e
+#! /bin/bash
 
 ### BEGIN INIT INFO
 # Provides:          teu_worker
-# Required-Start:    $local_fs $remote_fs $network $syslog $named
-# Required-Stop:     $local_fs $remote_fs $network $syslog $named
+# Required-Start:    $local_fs $remote_fs $network $syslog $named $supervisor
+# Required-Stop:     $local_fs $remote_fs $network $syslog $named $supervisor
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: starts teuthology worker
@@ -20,53 +20,50 @@ start() {
  START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep | awk '{print $1,$2,$12,$16,$17,$18,$19}')
  if [ -z "$START_STATUS" ];
   then
-        unset START_STATUS
-        echo "Starting worker ..."
-        cd /home/teuthworker
-        sudo -u teuthworker "/home/teuthworker/bin/start.sh"
-        sleep 3s
-        START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
-             if [ -z "$START_STATUS" ];
-              then
-                    echo "       *  fail"
-              else
-                    echo "       *  done"
-             tail /home/teuthworker/archive/worker_logs/process_logs
-             fi
+    echo "   Starting worker ..."
+    cd /home/teuthworker
+    sudo -u teuthworker "/home/teuthworker/bin/start.sh" &
+    sleep 3s
+    unset START_STATUS
+    START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
+      if [ -z "$START_STATUS" ];
+       then
+         echo "   *  fail"
+         tail /home/teuthworker/archive/worker_logs/process_logs
+       else
+         echo "   *  done"
+       fi
   else
-       echo "    *  teuthology worker is already running"
-       echo $STATUS
+    echo "   *  teuthology worker is already running"
+    echo $START_STATUS
+    unset START_STATUS
  fi
 }
 
 stop() {
- echo "Stopping worker ..."
- ps uax | grep ceph | grep tube | grep -v grep | awk '{print $2}' | xargs kill -9
- echo "  *  done"
+ STOP_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep | awk '{print $2}')
+   if [ -z "$STOP_STATUS" ];
+     then
+        echo "   *  nothing to stop, teuthology worker is not running"
+     else
+        echo "   Stopping worker ..."
+        ps uax | grep ceph | grep tube | grep -v grep | awk '{print $2}' | xargs kill -9
+        echo "   *  done"
+   fi
+ unset STOP_STATUS
 }
 
 status() {
  STATUS=$(ps uax | grep ceph | grep tube | grep -v grep | awk '{print $1,$2,$12,$16,$17,$18,$19}')
  if [ -z "$STATUS" ];
   then
-       echo "    *  teuthology worker is not running"
+       echo "   *  teuthology worker is not running"
   else
-       echo "    *  teuthology worker is running"
+       echo "   *  teuthology worker is running"
        echo $STATUS
  fi
+ unset STATUS
 }
-
-#check() {
-# CH_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
-# if [ -z "$CH_STATUS" ];
-#      then
-#        echo "   *  fail"
-#      else
-#        echo "   *  done"
-#        tail /home/teuthworker/archive/worker_logs/process_logs
-# fi
-#}
-
 
 case "$1" in
  start)
