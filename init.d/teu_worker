@@ -7,13 +7,13 @@
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
 # Short-Description: starts teuthology worker
-# Description:       starts nginx using start-stop script
+# Description:       starts worker using start-stop script
 ### END INIT INFO
 
 if ! [ $# -eq 1 ]
-then
-echo "Usage: \$0 [start|stop|restart|status]"
-exit 1
+  then
+    echo "Usage: \$0 [start|stop|restart|status]"
+  exit 1
 fi
 
 start() {
@@ -23,12 +23,14 @@ start() {
         echo "Starting worker ..."
         cd /home/teuthworker
         sudo -u teuthworker "/home/teuthworker/bin/start.sh"
+        sleep 3s
         START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
              if [ -z "$START_STATUS" ];
               then
                     echo "       *  fail"
               else
                     echo "       *  done"
+             tail /home/teuthworker/archive/worker_logs/process_logs
              fi
   else
        echo "    *  teuthology worker is already running"
@@ -36,13 +38,11 @@ start() {
  fi
 }
 
-
 stop() {
  echo "Stopping worker ..."
  ps uax | grep ceph | grep tube | grep -v grep | awk '{print $2}' | xargs kill -9
  echo "  *  done"
 }
-
 
 status() {
  STATUS=$(ps uax | grep ceph | grep tube | grep -v grep | awk '{print $1,$2,$12,$16,$17,$18,$19}')
@@ -52,6 +52,17 @@ status() {
   else
        echo "    *  teuthology worker is running"
        echo $STATUS
+ fi
+}
+
+check() {
+ START_STATUS=$(ps uax | grep ceph | grep tube | grep -v grep)
+ if [ -z "$START_STATUS" ];
+      then
+        echo "   *  fail"
+      else
+        echo "   *  done"
+        tail /home/teuthworker/archive/worker_logs/process_logs
  fi
 }
 
