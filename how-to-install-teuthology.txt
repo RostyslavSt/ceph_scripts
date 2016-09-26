@@ -1,0 +1,309 @@
+2.2 Installation of dependencies
+
+Install all dependencies by executing a command:
+
+$ sudo apt-get install git python-dev python-virtualenv postgresql postgresql-contrib postgresql-server-dev-all supervisor
+
+$ sudo apt-get -y install python-pip libevent-dev python-libvirt beanstalkd
+
+$ sudo apt-get -y install qemu-utils libev-dev libvirt-dev libmysqlclient-dev libffi-dev libyaml-dev
+
+2.3 Create postgres user and database for Paddles
+
+Create user by executing a simple command:
+
+$ sudo -u postgres createuser paddles -P
+Please note that you should set password for database
+
+Create database by executing a simple command:
+$ sudo -u postgres createdb paddles
+
+
+2.4 Installation,  deployment and configuration of Paddles
+
+Please note that you can also follow the official tutorial to install, or relatively simple.
+https://github.com/ceph/paddles
+
+Prerequisite:
+Please install and configure the Ubuntu system, both on virtual or physical machine, the machine should be able to access the Internet.
+
+Navigate to home directory.
+
+$ cd ~
+
+    Clone paddles repository.
+
+$ git clone https://github.com/ceph/paddles.git
+
+    Navigate to directory where paddles repository have been cloned.
+
+$ cd paddles/
+
+    Inside the repository, create a virtualenv.
+
+$ virtualenv ./virtualenv
+
+    Create a copy of the configuration template.
+
+$ cp config.py.in config.py
+
+    Edit config.py to reflect your hostnames, database info, etc.
+
+$ vim config.py
+
+Please note that you should change logging section of the config.py in the folowing line:
+'sqlalchemy': {'level': 'WARN'},    →      'sqlalchemy': {'level': 'WARN', 'handlers': ['console']},
+
+Activate the virtualenv.
+
+$ source ./virtualenv/bin/activate
+
+    Install required python packages.
+
+$ pip install -r requirements.txt
+    Run.
+
+$ python setup.py develop
+
+    Populate the database tables.
+
+$ pecan populate config.py
+
+    Create a copy of the alembic configuration template.
+
+$ cp alembic.ini.in alembic.ini
+
+    Edit alembic.ini to reflect your database information.
+
+$ vim alembic.ini
+
+Tell alembic that you have the latest database version.
+
+$ alembic stamp head
+
+    Create a copy of the configuration template.
+
+$ sudo cp supervisord_paddles.conf /etc/supervisor/conf.d/paddles.conf
+
+    Edit paddles.py to reflect your paddles info, etc.
+
+$ sudo nano /etc/supervisor/conf.d/paddles.conf
+
+    Restart supervisor service.
+
+$ sudo /etc/init.d/supervisor restart
+
+    Check status of the processes which is run by via supervisor.
+
+$ sudo supervisorctl status
+
+Output example.
+
+$ supervisorctl status
+   paddles                          RUNNING    pid 12653, uptime 0:02:13
+
+Check if paddles web interface is available.
+
+2.5 Installation,  deployment and configuration of Pulpito
+
+Please note that you can also follow the official tutorial to install, or relatively simple.
+https://github.com/ceph/pulpito
+
+Navigate to home directory.
+
+$ cd ~
+
+    Clone pulpito repository.
+
+$ git clone https://github.com/ceph/pulpito.git
+
+Navigate to directory where have been cloned pulpito repository.
+
+$ cd pulpito/
+
+Inside the repository, create a virtualenv.
+$ virtualenv ./virtualenv
+
+    Create a copy of the configuration template
+
+$ cp config.py.in prod.py
+
+Edit prod.py to reflect your paddles configuration
+
+
+$ vim prod.py
+
+    Activate the virtualenv.
+
+$ source ./virtualenv/bin/activate
+
+    Install required python packages.
+
+$ pip install -r requirements.txt
+
+Create a copy of the configuration template
+
+$ sudo cp supervisord_pulpito.conf /etc/supervisor/conf.d/pulpito.conf
+
+
+
+Edit pulpito.conf to reflect your pulpito info.
+
+$ sudo vim /etc/supervisor/conf.d/pulpito.conf
+
+Restart supervisor service.
+
+$ sudo supervisorctl restart
+
+Check status of the processes which is run by via supervisor.
+
+
+$ sudo supervisorctl status
+
+Output example.
+
+$ sudo supervisorctl status
+  paddles                          RUNNING    pid 12986, uptime 0:00:16
+  pulpito                          RUNNING    pid 12987, uptime 0:00:16
+
+
+2.6 Installation,  deployment and configuration of Teuthology framework
+
+    Create teuthology configuration file which reflects required configuration. For example please visit the link.
+
+$ sudo vim /etc/teuthology.yaml
+
+Create user teuthology.
+
+$ sudo adduser teuthology
+
+    Create user teuthworker.
+
+$ sudo adduser teuthworker
+
+Add the user teuthology to the group sudo.
+
+$ sudo usermod -a -G sudo teuthology
+
+    Add the user teuthworker to the group sudo.
+
+$ sudo usermod -a -G sudo teuthworker
+
+     Copy ssh key for granting access to environment without password.
+
+$ sudo cp -rf /home/ubuntu/.ssh /home/teuthology/
+
+     copy ssh key for granting access to environment without password.
+
+$ sudo cp -rf /home/ubuntu/.ssh /home/teuthworker/
+
+    Grand privileges on ssh keys.
+
+$ sudo chown -R teuthology:teuthology /home/teuthology/.ssh
+
+    Grand privileges on ssh keys.
+
+$ sudo chown -R teuthworker:teuthworker /home/teuthworker/.ssh
+
+Switch user to teuthology.
+$ su teuthology
+
+
+    Navigate to user home directory.
+
+$ cd ~/
+
+    Create directory named src.
+
+$ mkdir ~/src
+
+    Clone teuthology repository.
+
+$ git clone https://github.com/ceph/teuthology.git src/teuthology_master
+
+    Navigate to directory where have been cloned teuthology repository.
+
+$ cd src/teuthology_master/
+
+    Run.
+
+$ ./bootstrap
+
+    Navigate to user home directory.
+
+$ cd ~/
+
+    Switch user to teuthworker.
+
+$ su teuthworker
+
+Navigate to user home directory.
+$ cd ~
+
+    Create directory named src.
+$ mkdir ~/src
+
+    Clone teuthology repository.
+
+$ git clone https://github.com/ceph/teuthology.git src/teuthology_master
+
+Navigate to directory where have been cloned teuthology repository.
+
+$ cd src/teuthology_master/
+
+
+    Run.
+$ ./bootstrap
+
+    Navigate to home directory.
+$ cd ~/
+
+    Create directory named bin.
+
+$ mkdir ~/bin
+
+Download script which starts worker.
+$ wget -O ~/bin/worker_start \ https://raw.githubusercontent.com/ceph/teuthology/master/docs/_static/worker_start.sh
+
+    Add environment variable to profile configuration file.
+
+$ echo 'PATH="$HOME/src/teuthology_master/virtualenv/bin:$PATH"' >> ~/.profile
+
+    Activate profile settings.
+
+$ source ~/.profile
+
+    Create directory for log storing.
+
+$ mkdir -p ~/archive/worker_logs
+
+Grant required privileges on directory.
+$ chmod +x bin/worker_start
+
+    Start one worker named magna.
+$ worker_start magna 1
+
+$ touch ~/.vault_pass.txt
+
+
+3 Submitting slave node.
+
+    Download script which help you to configure slave nodes for Teuthology.
+
+$ wget https://raw.githubusercontent.com/ceph/teuthology/master/docs/_static/create_nodes.py
+
+Edit create_nodes.py to reflect slave nodes hostnames, etc.
+
+$ vim create_nodes.py
+
+Please note that all slave nodes hostnames should be resolved via /etc/hosts.
+
+    Run.
+
+$ python create_nodes.py
+
+Please note that before running test you should connect to all slave nodes via ssh on behalf of teuthworker user.
+
+$ ssh ubuntu@<NODE_NAME>
+
+
