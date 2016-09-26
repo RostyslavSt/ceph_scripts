@@ -1,0 +1,82 @@
+# This is a sample configuration file.
+#
+# Modify it to fit your environment and rename it to something like 'prod.py'
+
+from pecan.hooks import RequestViewerHook
+from paddles.hooks import IsolatedTransactionHook
+from paddles import models
+from paddles.hooks.cors import CorsHook
+
+
+# Server Specific Configurations
+server = {
+    'port': '9999',
+    'host': '127.0.0.1'
+}
+
+# These values will be specific to your site
+address = 'http://paddles.teuthology.mirantis.com'
+job_log_href_templ = 'http://logs.teuthology.mirantis.com/{run_name}/{job_id}/teuthology.log'  # noqa
+default_latest_runs_count = 25
+
+# Pecan Application Configurations
+app = {
+    'root': 'paddles.controllers.root.RootController',
+    'modules': ['paddles'],
+    #'static_root': '%(confdir)s/public',
+    'template_path': '%(confdir)s/paddles/templates',
+    'default_renderer': 'json',
+    'guess_content_type_from_ext': False,
+    'debug': False,
+    'hooks': [
+        IsolatedTransactionHook(
+            models.start,
+            models.start_read_only,
+            models.commit,
+            models.rollback,
+            models.clear
+        ),
+        # Uncomment this if you want more logging
+        #RequestViewerHook({'blacklist': ['/favicon.ico', '/errors/'],
+        #                   'items':
+        #                  ['date', 'path', 'status', 'method', 'controller'],
+        #                   }),
+        CorsHook(),
+    ],
+}
+
+logging = {
+    'disable_existing_loggers': False,
+    'loggers': {
+        'root': {'level': 'INFO', 'handlers': ['console']},
+        'paddles': {'level': 'DEBUG', 'handlers': ['console']},
+        'sqlalchemy': {'level': 'WARN', 'handlers': ['console']},
+        'py.warnings': {'handlers': ['console']},
+        '__force_dict__': True
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple'
+        }
+    },
+    'formatters': {
+        'simple': {
+            'format': ('%(asctime)s %(levelname)-5.5s [%(name)s]'
+                       ' %(message)s')
+        }
+    }
+}
+
+
+sqlalchemy = {
+    # You may use SQLite for testing
+    #'url': 'sqlite:///dev.db',
+    # When you set up PostreSQL, it will look more like:
+    'url': 'postgresql+psycopg2://DB_USER_NAME:DB_USER_PASSWORD@DB_HOSTNAME/DB_NAME',
+    'echo':          True,
+    'echo_pool':     True,
+    'pool_recycle':  3600,
+    'encoding':      'utf-8'
+}

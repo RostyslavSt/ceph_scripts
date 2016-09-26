@@ -1,0 +1,49 @@
+
+!!!! IMPORTANT !!!!
+
+     hostname: gitbuilder-ceph-deb-trusty-cmake
+     user: ubuntu
+
+!!!  user ubuntu needs passwordless sudo
+
+step-by-step install:
+
+ sudo apt-get update && sudo apt-get upgrade && reboot
+ sudo apt-get install mc nano git
+ cd ~
+
+      git clone https://github.com/ceph/autobuild-ceph.git
+      git clone https://github.com/Mirantis/ceph.git ceph_master
+
+  NOTE:      put *.gpg keys in to /home/ubuntu directory and
+                  /home/ubuntu/autobuild-ceph/
+
+ cd ceph_master
+      sudo ./install-deps.sh
+      DEPS=`cat doc_deps.deb.txt`
+      sudo apt-get install $DEPS cdbs fabric
+      unset DEPS
+
+  sudo nano /etc/hostname  (set correct hostname)
+  sudo nano /etc/hosts:
+      add:
+            127.0.0.1 gitbuilder-ceph-deb-trusty gitbuilder-ceph-deb-trusty.mirantis.com
+
+ cd ~/autobuild-ceph/
+    nano fabfile.py    (example file below)
+
+ #####################################
+ # sudo mkdir /srv/gnupg             # do this if you have problem
+ # sudo cp -f ~/*.gpg /srv/gnupg/    #    whis .gpg keys
+ #####################################
+
+ fab gitbuilder_auto:host=ubuntu@localhost
+ fab gitbuilder_serve:role=gitbuilder_auto
+ cpan LockFile::Simple
+ sudo touch /srv/autobuild-ceph/no-mirror
+
+ reboot
+ sudo rm -rf /srv/autobuild-ceph/logs/*.log
+ sudo rm -fr /srv/autobuild-ceph/gitbuilder.git/out/pass/*
+
+
